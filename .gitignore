@@ -1,4 +1,5 @@
 eigen/
+files/
 *.o
 *.out
 *.txt
