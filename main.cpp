@@ -9,7 +9,7 @@ typedef std::string str;
 int main(int argc, char **argv) {
     str filename = argv[1];
     str filetype;
-    getFileType(filename, filetype)
+    getFileType(filename, filetype);
 
     mpsReader mps;
 
