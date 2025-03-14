@@ -1,0 +1,4 @@
+eigen/
+*.o
+*.out
+*.txt
