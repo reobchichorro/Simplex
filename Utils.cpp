@@ -12,25 +12,25 @@
 #include <math.h>
 #include <filesystem>
 
-#define all(v) v.begin(),v.end()
-#define eps 1e-6
+// #define all(v) v.begin(),v.end()
+// #define eps 1e-6
 
 typedef std::string str;
 
-void printToFile(const str& filepath, const str& toPrint) {
-    std::ofstream file(filepath);
-    file << toPrint;
-    file.close();
-}
+// void printToFile(const str& filepath, const str& toPrint) {
+//     std::ofstream file(filepath);
+//     file << toPrint;
+//     file.close();
+// }
 
-void removeFileType(const str& filename, str& outname) {
-    outname = filename;
-    outname.erase(std::find(all(outname), '.'),outname.end());
-}
+// void removeFileType(const str& filename, str& outname) {
+//     outname = filename;
+//     outname.erase(std::find(all(outname), '.'),outname.end());
+// }
 
-void getFileType(const str& filename, str& filetype) {
-    filetype = filename.substr(filename.find('.'));
-}
+// void getFileType(const str& filename, str& filetype) {
+//     filetype = filename.substr(filename.find('.'));
+// }
 
 // Timer::Timer(const std::string &msg): st(msg) {reset();}
 // Timer::~Timer() {

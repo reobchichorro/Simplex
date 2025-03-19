@@ -1,5 +1,5 @@
 #include "mpsReader.h"
-#include "Scaling.h"
+#include "eigen/Eigen/src/Geometry/Scaling.h"
 
 mpsReader::mpsReader(string fileName)
 {
@@ -60,6 +60,9 @@ void mpsReader::read(string fileName, int pre)
 
         // output
         //_printData();
+
+        m = n_rows_eq + n_rows_inq;
+        n = n_cols + n_rows_inq + n_rows_eq;
     }
     else
     {
@@ -244,9 +247,9 @@ void mpsReader::_extractData(ifstream &readFile)
 
     // get bounds
 
-    lb = VectorXd::Zero(n_cols + n_rows_inq);
-    ub = VectorXd::Zero(n_cols + n_rows_inq);
-    ub.fill(numeric_limits<double>::infinity());
+    // lb = VectorXd::Zero(n_cols + n_rows_inq);
+    // ub = VectorXd::Zero(n_cols + n_rows_inq);
+    // ub.fill(numeric_limits<double>::infinity());
 
     if (bnd_exist)
         _getBnds(readFile);
@@ -255,8 +258,8 @@ void mpsReader::_extractData(ifstream &readFile)
     // and splict braw to b and beq
     A = MatrixXd::Zero(n_rows_inq + n_rows_eq, n_cols + n_rows_inq);
     b = VectorXd::Zero(n_rows_inq + n_rows_eq);
-    Scaling sc;
-    if(preprocess) sc.geometric_iterate(Araw, braw, c, lb, ub);
+    // Eigen::Scaling sc;
+    // if(preprocess) sc.geometric_iterate(Araw, braw, c, lb, ub);
     _splitRaw(Araw, braw, c, A, b);
 }
 
@@ -354,20 +357,20 @@ void mpsReader::_getBnds(std::ifstream &readFile)
         iss >> label >> rowName >> colName >> value;
         colIdx = _getIndex(col_list, colName);
         // cout << "l: " << label << " " << colName << endl;
-        if (label == "LO")
-            lb(colIdx) = value;
-        else if (label == "UP")
-            ub(colIdx) = value;
-        else if (label == "FR")
-        {
-            ub(colIdx) = numeric_limits<double>::infinity();
-            lb(colIdx) = -numeric_limits<double>::infinity();
-        }
-        else if (label == "FX")
-        {
-            ub(colIdx) = value;
-            lb(colIdx) = value;
-        }
+        // if (label == "LO")
+        //     lb(colIdx) = value;
+        // else if (label == "UP")
+        //     ub(colIdx) = value;
+        // else if (label == "FR")
+        // {
+        //     ub(colIdx) = numeric_limits<double>::infinity();
+        //     lb(colIdx) = -numeric_limits<double>::infinity();
+        // }
+        // else if (label == "FX")
+        // {
+        //     ub(colIdx) = value;
+        //     lb(colIdx) = value;
+        // }
         {
             if (_checkSectionName(label) == 10)
             {
@@ -400,20 +403,20 @@ void mpsReader::_splitRaw(MatrixXd &Araw, VectorXd &braw, VectorXd &c, MatrixXd 
     {
         if (row_labels[i] != "X"){
             A.block(counter, 0, 1, n_cols) = Araw.row(i);
-            //b.row(counter) = braw.row(i);
+            b.row(counter) = braw.row(i);
             if (row_labels[i] == "L"){
                 restricoes.push_back(-1);
-                A(counter, n_cols + counter_inq) = -1;
-                lb(n_cols + counter_inq) = -numeric_limits<double>::infinity();
-                ub(n_cols + counter_inq) = braw(i);
+                A(counter, n_cols + counter_inq) = 1;
+                // lb(n_cols + counter_inq) = -numeric_limits<double>::infinity();
+                // ub(n_cols + counter_inq) = braw(i);
                 // cout << "braw(i): " << braw(i) << " " << n_cols + counter_inq << endl;
                 counter_inq++;
             }
             else if (row_labels[i] == "G"){
                 restricoes.push_back(1);
-                A(counter, n_cols + counter_inq) = -1;
-                ub(n_cols + counter_inq) = numeric_limits<double>::infinity();
-                lb(n_cols + counter_inq) = braw(i);
+                A(counter, n_cols + counter_inq) = 1;
+                // ub(n_cols + counter_inq) = numeric_limits<double>::infinity();
+                // lb(n_cols + counter_inq) = braw(i);
                 // cout << "braw(i): " << braw(i) << endl;
                 counter_inq++;
             }
@@ -421,9 +424,9 @@ void mpsReader::_splitRaw(MatrixXd &Araw, VectorXd &braw, VectorXd &c, MatrixXd 
                 // restricoes.push_back(0);
                 // adicionado:
                 restricoes.push_back(1);
-                A(counter, n_cols + counter_inq) = -1;
-                ub(n_cols + counter_inq) = braw(i);
-                lb(n_cols + counter_inq) = braw(i);
+                A(counter, n_cols + counter_inq) = 1;
+                // ub(n_cols + counter_inq) = braw(i);
+                // lb(n_cols + counter_inq) = braw(i);
                 // cout << "braw(i): " << braw(i) << endl;
                 counter_inq++;
             }

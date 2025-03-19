@@ -63,9 +63,9 @@
 #include <string>
 #include <fstream>
 
-#include "Eigen/Dense"
-#include "Eigen/Sparse"
-#include "Eigen/src/Core/Matrix.h"
+#include "eigen/Eigen/Dense"
+#include "eigen/Eigen/Sparse"
+#include "eigen/Eigen/src/Core/Matrix.h"
 
 // #include "Data.h"
 
@@ -86,10 +86,13 @@ public:
     int n_rows_inq;
     int n_cols;
 
+    int m;
+    int n;
+
     MatrixXd A;
     VectorXd b;
-    VectorXd lb;
-    VectorXd ub;
+    // VectorXd lb;
+    // VectorXd ub;
     VectorXd c;
 
     vector<string> row_labels;
