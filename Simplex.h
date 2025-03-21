@@ -43,6 +43,7 @@ private:
     MatrixXd A_n; // constraint coefs of non-basic variables
 
     double Z; // obj function value
+    VectorXd b; // value of basic variables
 
     MatrixXd B_inv; // inverse of B
     
