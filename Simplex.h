@@ -29,7 +29,9 @@ public:
     mpsReader instance;
  
     Simplex(mpsReader& instance) : instance(instance) {};
-
+    
+    void CalculateGivenSelection(const std::vector<int>& given_x_b);
+    
     void Standard();
     void RevisedNaive();
 private:
@@ -52,6 +54,6 @@ private:
 
 
     void SetInitialSolution();
-    bool yan_cn(int& enteringVar, VectorXd& yan);
+    bool yan_cn(int& enteringVar, const int& lastExitingVar, VectorXd& yan);
 };
 #endif

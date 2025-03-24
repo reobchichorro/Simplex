@@ -83,6 +83,18 @@ int main(int argc, char **argv) {
             19  13  12  17  0   0   0
             -1 -1 -1
     */
+    // std::vector<std::vector<int> > sols = std::vector<std::vector<int> >(4, std::vector<int>(3, 0));
+    // sols[0] = std::vector<int>({0, 5, 6});
+    // sols[1] = std::vector<int>({1, 5, 6});
+    // sols[2] = std::vector<int>({1, 2, 6});
+    // sols[3] = std::vector<int>({1, 0, 6});
+
+    // for (int i=0; i<4; i++) {
+    //     std::cout << "i " << i << std::endl;
+    //     Simplex solver(mps);
+    //     solver.CalculateGivenSelection(sols[i]);
+    // }
+
     
     std::cout << "Simplex\n";
     Simplex solver(mps);
