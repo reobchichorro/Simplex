@@ -61,28 +61,6 @@ int main(int argc, char **argv) {
             // n = mps.n_cols + mps.n_rows_inq + mps.n_rows_eq;
         }
     }
-    /*
-        TESTPROB
-            4
-            0
-            3
-            4
-            3
-            7
-            A
-            3  2  1  2 -1  0  0
-            1  1  1  1  0 -1  0
-            4  3  3  4  0  0 -1
-            b
-            0   0   0
-            lb
-            0   0   0   0   -inf    -inf    -inf
-            ub
-            inf inf inf inf 225 117 420
-            c
-            19  13  12  17  0   0   0
-            -1 -1 -1
-    */
     
     std::cout << "Simplex\n";
     Simplex solver(mps);

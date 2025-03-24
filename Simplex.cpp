@@ -40,8 +40,9 @@ void Simplex::SetInitialSolution() {
 bool Simplex::yan_cn(int& enteringVar, VectorXd& yan) {
     enteringVar = -1;
     bool ans = false;
-    for (int j=0; j<c_n.size(); j++) {
-        if (yan(j) < c_n(j)) {
+    VectorXd objImpr = c_n-yan;
+    for (int j=0; j<objImpr.size(); j++) {
+        if (objImpr(j) > .0) {
             enteringVar = j;
             return true;
         }
@@ -54,24 +55,12 @@ bool Simplex::yan_cn(int& enteringVar, VectorXd& yan) {
 // }
 
 void Simplex::RevisedNaive() {
-    // Solve the system yB = c_B
-    // Choose an entering column. This may be any column a of A_N such that ya is less than the corresponding component of c_N. If there is no such column, then the current solution is optimal.
-    // Solve the system Bd = a
-    // Find the largest t such that x_B^* - td >= 0. If there is no such t, then the problem in unbounded; otherwise, at least one component of x_B^* - td equals zero and the corresponding variable is leaving the basis
-    // Set the value of the entering variable at t and replace the values x_B^* of the basic variables by x_B^* - td. Replace the leaving column of B by the entering column and, in the basis heading, replace the leaving variable by the entering variable.
-
     SetInitialSolution(); // 2.0
 
     VectorXd y = c_b.transpose()*B_inv; // 2.1
     
     VectorXd yan = y.transpose()*A_n; // 2.2
     std::cout << "yan\n" << yan.transpose() << std::endl;
-
-    // std::cout << yan << std::endl;
-    // std::cout << (yan < c_n) << std::endl;
-    // for (auto it = yan.begin(); it != yan.end(); it++)
-    //     std::cout << *it << " ";
-    // std::cout << std::endl;
 
     int enteringVar = -1;
     int exitVar = 0;
@@ -115,12 +104,4 @@ void Simplex::RevisedNaive() {
 
 
     std::cout << b.transpose() << std::endl;
-
-    // while(2.2.5){
-        //2.3
-        //2.4
-        //2.5
-        //2.1
-        //2.2
-    // }
 }
