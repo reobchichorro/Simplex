@@ -87,7 +87,7 @@ void Simplex::RevisedNaive() {
         std::cout << "t\n" << t.transpose() << std::endl;
         exitVar = 0;
         for (int j=1; j<t.size(); j++) {
-            if (t(j) < t(exitVar))
+            if (t(j) < t(exitVar) && t(j) > 0)
                 exitVar = j;
         }
         std::cout << "Exiting var: " << x_b[exitVar]+1 << std::endl;
