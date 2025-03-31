@@ -91,8 +91,8 @@ public:
 
     MatrixXd A;
     VectorXd b;
-    // VectorXd lb;
-    // VectorXd ub;
+    VectorXd lb;
+    VectorXd ub;
     VectorXd c;
 
     vector<string> row_labels;

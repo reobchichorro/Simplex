@@ -33,10 +33,10 @@ int main(int argc, char **argv) {
         std::cout << mps.A << std::endl;
         std::cout << "b" << std::endl;
         std::cout << mps.b << std::endl;
-        // std::cout << "lb" << std::endl;
-        // std::cout << mps.lb << std::endl;
-        // std::cout << "ub" << std::endl;
-        // std::cout << mps.ub << std::endl;
+        std::cout << "lb" << std::endl;
+        std::cout << mps.lb << std::endl;
+        std::cout << "ub" << std::endl;
+        std::cout << mps.ub << std::endl;
         std::cout << "c" << std::endl;
         std::cout << mps.c << std::endl;
 
@@ -64,5 +64,5 @@ int main(int argc, char **argv) {
     
     std::cout << "Simplex\n";
     Simplex solver(mps);
-    solver.RevisedNaive();
+    solver.Revised();
 }

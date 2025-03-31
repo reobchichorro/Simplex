@@ -31,7 +31,8 @@ public:
     Simplex(mpsReader& instance) : instance(instance) {};
 
     void Standard();
-    void RevisedNaive();
+    void RevisedNaive(); // Deprecated
+    void Revised();
 private:
     std::vector<int> x_b; // idx of basic variables
     std::vector<int> x_n; // idx of non-basic variables
@@ -42,16 +43,21 @@ private:
     MatrixXd B; // constraint coefs of basic variables
     MatrixXd A_n; // constraint coefs of non-basic variables
 
+    VectorXd lb; // lower bound of variables
+    VectorXd ub; // upper bound of variables
+
     double Z; // obj function value
-    VectorXd b; // value of basic variables
+    VectorXd ans; // value of variables
+
+    VectorXd b; // Deprecated
 
     MatrixXd B_inv; // inverse of B
     
     // MatrixXd G;
     // void CreateG();
 
-
     void SetInitialSolution();
-    bool yan_cn(int& enteringVar, VectorXd& yan);
+    bool CheckBoundsOnInit(); // Returns true if firstPhase is necessary
+    int SelectEnteringVar(int& enteringVar, VectorXd& yan);
 };
 #endif
