@@ -34,11 +34,11 @@ int main(int argc, char **argv) {
         std::cout << "b" << std::endl;
         std::cout << mps.b << std::endl;
         std::cout << "lb" << std::endl;
-        std::cout << mps.lb << std::endl;
+        std::cout << mps.lb.transpose() << std::endl;
         std::cout << "ub" << std::endl;
-        std::cout << mps.ub << std::endl;
+        std::cout << mps.ub.transpose() << std::endl;
         std::cout << "c" << std::endl;
-        std::cout << mps.c << std::endl;
+        std::cout << mps.c.transpose() << std::endl;
 
         for (std::vector<int>::size_type i=0; i < mps.restricoes.size(); i++)
             std::cout << mps.restricoes[i] << " ";
