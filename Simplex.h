@@ -57,7 +57,7 @@ private:
     // void CreateG();
 
     void SetInitialSolution();
-    bool CheckBoundsOnInit(); // Returns true if firstPhase is necessary
+    bool CheckBounds(); // Returns true if firstPhase is necessary
     int SelectEnteringVar(int& enteringVar, VectorXd& yan);
 };
 #endif
