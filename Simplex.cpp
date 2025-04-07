@@ -4,6 +4,10 @@
 #include "Simplex.h"
 #include "mpsReader.h"
 
+Simplex::Simplex(mpsReader& instance) : instance(instance) {
+    E_k = std::vector<std::pair<int, VectorXd> >(maxRefact);
+}
+
 // void Simplex::CreateG() {
 //     G = MatrixXd(instance.m+1, instance.n+1);
 
@@ -172,14 +176,16 @@ void Simplex::Revised() {
     int count = 0;
     int direction = SelectEnteringVar(enteringVar, yan);
     
-    while (direction && firstPhase) {
+    while (direction) {
         count++;
         // std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
         
         VectorXd d = B_inv*A_n(Eigen::all, enteringVar); // 2.3
         // std::cout << "d\n" << d.transpose() << std::endl;
-
+        
         entidx = x_n[enteringVar];
+
+        // E_k[E_k_size] = std::pair<int, VectorXd>(entidx, d); // TODO - cópia ou referência?
 
         double tlb = direction * (lb(entidx) - ans(entidx));
         double tub = direction * (ub(entidx) - ans(entidx));
@@ -243,109 +249,19 @@ void Simplex::Revised() {
             std::swap(x_b[exitVar], x_n[enteringVar]);
         }
 
-        y = c_b.transpose()*B_inv; // 2.1
-        yan = y.transpose()*A_n; // 2.2
-        // std::cout << "yan\n" << yan.transpose() << std::endl;
-
-        // std::cout << "cb\n" << c_b.transpose() << std::endl;
-        // std::cout << "cn\n" << c_n.transpose() << std::endl;
-
-        // std::cout << "B\n" << B << std::endl;
-        // std::cout << "A_n\n" << A_n << std::endl << std::endl;
-
-        direction = SelectEnteringVar(enteringVar, yan);
-        firstPhase = CheckBounds();
-    }
-    std::cout << "Second phase\n";
-    
-    // Non-basic variables
-    for (int j=0; j<instance.n - instance.m; j++)
-        c_n(j) = instance.c(x_n[j]);
-    // Basic variables
-    for (int j=0; j<instance.m; j++)
-        c_b(j) = instance.c(x_b[j]);
-
-    y = c_b.transpose()*B_inv; // 2.1
-    yan = y.transpose()*A_n; // 2.2
-    // std::cout << "yan\n" << yan.transpose() << std::endl;
-
-    // std::cout << "cb\n" << c_b.transpose() << std::endl;
-    // std::cout << "cn\n" << c_n.transpose() << std::endl;
-
-    // std::cout << "B\n" << B << std::endl;
-    // std::cout << "A_n\n" << A_n << std::endl << std::endl;
-
-    direction = SelectEnteringVar(enteringVar, yan);
-
-    while(direction && count < 10) { // 2.2.5
-        count++;
-        // std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
-        
-        VectorXd d = B_inv*A_n(Eigen::all, enteringVar); // 2.3
-        // std::cout << "d\n" << d.transpose() << std::endl;
-
-        entidx = x_n[enteringVar];
-
-        double tlb = direction * (lb(entidx) - ans(entidx));
-        double tub = direction * (ub(entidx) - ans(entidx));
-
-        if (direction == -1)
-            std::swap(tlb, tub);
-
-        VectorXd tdlb = direction * ((ans(x_b) - lb(x_b)).array() / d.array()).matrix();
-        VectorXd tdub = direction * ((ans(x_b) - ub(x_b)).array() / d.array()).matrix(); // 2.4
-
-        if (direction == 1)
-            std::swap(tdlb, tdub);
-        
-        for (int j=0; j<d.size(); j++)
-            if (d(j) < 0.0)
-                std::swap(tdlb(j), tdub(j));
-
-        for (int j=0; j<tdub.size(); j++)
-            if (isnan(tdub(j)) || d(j) == 0.0)
-                tdub(j) = numeric_limits<double>::infinity();
-
-        // std::cout << "t\n" << tlb << " " << tub << "\n" << tdlb.transpose() << "\n" << tdub.transpose() << std::endl;
-
-        int lowestUBIdx = std::distance(tdub.begin(), std::min_element(tdub.begin(), tdub.end()));
-
-        // std::cout << lowestUBIdx << " lubidx\n";
-
-        if (tdub(lowestUBIdx) == numeric_limits<double>::infinity() && tub == numeric_limits<double>::infinity()) {
-            std::cout << "Unbounded\n";
-            return;
-        }
-
-        if (tub <= tdub(lowestUBIdx)) {
-            double t = tub;
-            if (ans.hasNaN()) {
-                std::cout << count << " nan\n";
-                return;
+        if (firstPhase) {
+            firstPhase = CheckBounds();
+            if (!firstPhase) {
+                std::cout << "Second phase\n";
+                // Non-basic variables
+                for (int j=0; j<instance.n - instance.m; j++)
+                    c_n(j) = instance.c(x_n[j]);
+                // Basic variables
+                for (int j=0; j<instance.m; j++)
+                    c_b(j) = instance.c(x_b[j]);
             }
-            ans(entidx) += direction*t;
-            ans(x_b) += -direction*t*d;
-            // std::cout << "ans\n" << ans.transpose() << std::endl;
         }
-        else {
-            double t = tdub(lowestUBIdx);
-            exitVar = lowestUBIdx;
-            exitidx = x_b[exitVar];
-            ans(entidx) += direction*t;
-            ans(x_b) += -direction*t*d;
-            if (ans.hasNaN()) {
-                std::cout << count << " nan\n";
-                return;
-            }
-
-            // std::cout << "ans\n"  << ans.transpose() << std::endl;
-
-            std::swap(c_b(exitVar), c_n(enteringVar));
-            B.col(exitVar).swap(A_n.col(enteringVar));
-            B_inv = B.inverse();
-            std::swap(x_b[exitVar], x_n[enteringVar]);
-        }
-
+        
         y = c_b.transpose()*B_inv; // 2.1
         yan = y.transpose()*A_n; // 2.2
         // std::cout << "yan\n" << yan.transpose() << std::endl;

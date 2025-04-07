@@ -28,7 +28,7 @@ class Simplex {
 public:
     mpsReader instance;
  
-    Simplex(mpsReader& instance) : instance(instance) {};
+    Simplex(mpsReader& instance);
 
     void Standard();
     void RevisedNaive(); // Deprecated
@@ -52,6 +52,10 @@ private:
     VectorXd b; // Deprecated
 
     MatrixXd B_inv; // inverse of B
+
+    int maxRefact = 20;
+    int E_k_size = 0;
+    std::vector<std::pair<int, VectorXd> > E_k;
     
     // MatrixXd G;
     // void CreateG();
