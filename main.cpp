@@ -29,20 +29,20 @@ int main(int argc, char **argv) {
         std::cout << mps.m << std::endl;
         std::cout << mps.n << std::endl;
     
-        std::cout << "A" << std::endl;
-        std::cout << mps.A << std::endl;
-        std::cout << "b" << std::endl;
-        std::cout << mps.b << std::endl;
-        std::cout << "lb" << std::endl;
-        std::cout << mps.lb.transpose() << std::endl;
-        std::cout << "ub" << std::endl;
-        std::cout << mps.ub.transpose() << std::endl;
-        std::cout << "c" << std::endl;
-        std::cout << mps.c.transpose() << std::endl;
+        // std::cout << "A" << std::endl;
+        // std::cout << mps.A << std::endl;
+        // std::cout << "b" << std::endl;
+        // std::cout << mps.b << std::endl;
+        // std::cout << "lb" << std::endl;
+        // std::cout << mps.lb.transpose() << std::endl;
+        // std::cout << "ub" << std::endl;
+        // std::cout << mps.ub.transpose() << std::endl;
+        // std::cout << "c" << std::endl;
+        // std::cout << mps.c.transpose() << std::endl;
 
-        for (std::vector<int>::size_type i=0; i < mps.restricoes.size(); i++)
-            std::cout << mps.restricoes[i] << " ";
-        std::cout << std::endl;
+        // for (std::vector<int>::size_type i=0; i < mps.restricoes.size(); i++)
+        //     std::cout << mps.restricoes[i] << " ";
+        // std::cout << std::endl;
         {
             // std::cout << mps.row_labels << std::endl;
             // std::cout << mps.col_labels << std::endl;

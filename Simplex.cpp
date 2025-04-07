@@ -44,7 +44,7 @@ void Simplex::SetInitialSolution() {
         B(Eigen::all, j) = instance.A(Eigen::all, x_b[j]);
         ans(x_b[j]) = (instance.A(j, Eigen::seqN(0, instance.n - instance.m)).dot(ans(Eigen::seqN(0, instance.n - instance.m))));
     }
-    std::cout << ans.transpose() << std::endl;
+    // std::cout << ans.transpose() << std::endl;
 
     B_inv = B.inverse();
 }
@@ -59,6 +59,7 @@ bool Simplex::CheckBounds() {
                 for (int jj=0; jj<j; jj++)
                     c_b(jj) = 0.0;
                 firstPhase = true;
+                std::cout << j << " xj: " << x_b[j] << " " << ans(x_b[j]) << " " << lb(x_b[j]) << "\n";
             }
             c_b(j) = 1;
         }
@@ -84,11 +85,11 @@ int Simplex::SelectEnteringVar(int& enteringVar, VectorXd& yan) {
     enteringVar = -1;
     VectorXd objImpr = c_n-yan;
     for (int j=0; j<objImpr.size(); j++) {
-        if (objImpr(j) > .0 && ans(x_n[j]) < ub(x_n[j])) {
+        if (objImpr(j) > eps && ans(x_n[j]) < ub(x_n[j])) {
             enteringVar = j;
             return 1;
         }
-        else if (objImpr(j) < .0 && ans(x_n[j]) > lb(x_n[j])) {
+        else if (objImpr(j) < eps && ans(x_n[j]) > lb(x_n[j])) {
             enteringVar = j;
             return -1;
         }
@@ -162,7 +163,7 @@ void Simplex::Revised() {
     VectorXd y = c_b.transpose()*B_inv; // 2.1
     
     VectorXd yan = y.transpose()*A_n; // 2.2
-    std::cout << "yan\n" << yan.transpose() << std::endl;
+    // std::cout << "yan\n" << yan.transpose() << std::endl;
 
     int enteringVar = -1;
     int entidx = -1;
@@ -173,22 +174,22 @@ void Simplex::Revised() {
     
     while (direction && firstPhase) {
         count++;
-        std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
+        // std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
         
         VectorXd d = B_inv*A_n(Eigen::all, enteringVar); // 2.3
-        std::cout << "d\n" << d.transpose() << std::endl;
+        // std::cout << "d\n" << d.transpose() << std::endl;
 
         entidx = x_n[enteringVar];
 
         double tlb = direction * (lb(entidx) - ans(entidx));
         double tub = direction * (ub(entidx) - ans(entidx));
-
+        
         if (direction == -1)
-            std::swap(tlb, tub);
-
+        std::swap(tlb, tub);
+        
         VectorXd tdlb = direction * ((ans(x_b) - lb(x_b)).array() / d.array()).matrix();
         VectorXd tdub = direction * ((ans(x_b) - ub(x_b)).array() / d.array()).matrix(); // 2.4
-
+        
         if (direction == 1)
             std::swap(tdlb, tdub);
         
@@ -196,12 +197,18 @@ void Simplex::Revised() {
             if (d(j) < 0.0)
                 std::swap(tdlb(j), tdub(j));
 
-        std::cout << "t\n" << tlb << " " << tub << "\n" << tdlb.transpose() << "\n" << tdub.transpose() << std::endl;
-
+        for (int j=0; j<tdub.size(); j++)
+            if (isnan(tdub(j)) || d(j) == 0.0)
+                tdub(j) = numeric_limits<double>::infinity();
+        
+        // std::cout << "t\n" << tlb << " " << tub << "\n" << tdlb.transpose() << "\n" << tdub.transpose() << std::endl;
+        
         int lowestUBIdx = std::distance(tdub.begin(), std::min_element(tdub.begin(), tdub.end()));
-
-        std::cout << lowestUBIdx << " lubidx\n";
-
+        
+        // std::cout << lowestUBIdx << " lubidx\n";
+        // std::cout << tdub.hasNaN() << " tlb tub " << tub << " " << lowestUBIdx << " " << tdub(lowestUBIdx) << "\n";
+        // std::cout << ans(x_b[1]) << " " << ub(x_b[1]) << " " << d(1) << " " << direction << "\n";
+        
         if (tdub(lowestUBIdx) == numeric_limits<double>::infinity() && tub == numeric_limits<double>::infinity()) {
             std::cout << "Unbounded\n";
             return;
@@ -211,7 +218,11 @@ void Simplex::Revised() {
             double t = tub;
             ans(entidx) += direction*t;
             ans(x_b) += -direction*t*d;
-            std::cout << "ans\n" << ans.transpose() << std::endl;
+            if (ans.hasNaN()) {
+                std::cout << count << " nan\n";
+                return;
+            }
+            // std::cout << "ans\n" << ans.transpose() << std::endl;
         }
         else {
             double t = tdub(lowestUBIdx);
@@ -219,8 +230,12 @@ void Simplex::Revised() {
             exitidx = x_b[exitVar];
             ans(entidx) += direction*t;
             ans(x_b) += -direction*t*d;
+            if (ans.hasNaN()) {
+                std::cout << count << " nan\n";
+                return;
+            }
 
-            std::cout << "ans\n"  << ans.transpose() << std::endl;
+            // std::cout << "ans\n"  << ans.transpose() << std::endl;
 
             std::swap(c_b(exitVar), c_n(enteringVar));
             B.col(exitVar).swap(A_n.col(enteringVar));
@@ -230,13 +245,13 @@ void Simplex::Revised() {
 
         y = c_b.transpose()*B_inv; // 2.1
         yan = y.transpose()*A_n; // 2.2
-        std::cout << "yan\n" << yan.transpose() << std::endl;
+        // std::cout << "yan\n" << yan.transpose() << std::endl;
 
-        std::cout << "cb\n" << c_b.transpose() << std::endl;
-        std::cout << "cn\n" << c_n.transpose() << std::endl;
+        // std::cout << "cb\n" << c_b.transpose() << std::endl;
+        // std::cout << "cn\n" << c_n.transpose() << std::endl;
 
-        std::cout << "B\n" << B << std::endl;
-        std::cout << "A_n\n" << A_n << std::endl << std::endl;
+        // std::cout << "B\n" << B << std::endl;
+        // std::cout << "A_n\n" << A_n << std::endl << std::endl;
 
         direction = SelectEnteringVar(enteringVar, yan);
         firstPhase = CheckBounds();
@@ -252,22 +267,22 @@ void Simplex::Revised() {
 
     y = c_b.transpose()*B_inv; // 2.1
     yan = y.transpose()*A_n; // 2.2
-    std::cout << "yan\n" << yan.transpose() << std::endl;
+    // std::cout << "yan\n" << yan.transpose() << std::endl;
 
-    std::cout << "cb\n" << c_b.transpose() << std::endl;
-    std::cout << "cn\n" << c_n.transpose() << std::endl;
+    // std::cout << "cb\n" << c_b.transpose() << std::endl;
+    // std::cout << "cn\n" << c_n.transpose() << std::endl;
 
-    std::cout << "B\n" << B << std::endl;
-    std::cout << "A_n\n" << A_n << std::endl << std::endl;
+    // std::cout << "B\n" << B << std::endl;
+    // std::cout << "A_n\n" << A_n << std::endl << std::endl;
 
     direction = SelectEnteringVar(enteringVar, yan);
 
     while(direction && count < 10) { // 2.2.5
         count++;
-        std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
+        // std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
         
         VectorXd d = B_inv*A_n(Eigen::all, enteringVar); // 2.3
-        std::cout << "d\n" << d.transpose() << std::endl;
+        // std::cout << "d\n" << d.transpose() << std::endl;
 
         entidx = x_n[enteringVar];
 
@@ -287,11 +302,15 @@ void Simplex::Revised() {
             if (d(j) < 0.0)
                 std::swap(tdlb(j), tdub(j));
 
-        std::cout << "t\n" << tlb << " " << tub << "\n" << tdlb.transpose() << "\n" << tdub.transpose() << std::endl;
+        for (int j=0; j<tdub.size(); j++)
+            if (isnan(tdub(j)) || d(j) == 0.0)
+                tdub(j) = numeric_limits<double>::infinity();
+
+        // std::cout << "t\n" << tlb << " " << tub << "\n" << tdlb.transpose() << "\n" << tdub.transpose() << std::endl;
 
         int lowestUBIdx = std::distance(tdub.begin(), std::min_element(tdub.begin(), tdub.end()));
 
-        std::cout << lowestUBIdx << " lubidx\n";
+        // std::cout << lowestUBIdx << " lubidx\n";
 
         if (tdub(lowestUBIdx) == numeric_limits<double>::infinity() && tub == numeric_limits<double>::infinity()) {
             std::cout << "Unbounded\n";
@@ -300,9 +319,13 @@ void Simplex::Revised() {
 
         if (tub <= tdub(lowestUBIdx)) {
             double t = tub;
+            if (ans.hasNaN()) {
+                std::cout << count << " nan\n";
+                return;
+            }
             ans(entidx) += direction*t;
             ans(x_b) += -direction*t*d;
-            std::cout << "ans\n" << ans.transpose() << std::endl;
+            // std::cout << "ans\n" << ans.transpose() << std::endl;
         }
         else {
             double t = tdub(lowestUBIdx);
@@ -310,8 +333,12 @@ void Simplex::Revised() {
             exitidx = x_b[exitVar];
             ans(entidx) += direction*t;
             ans(x_b) += -direction*t*d;
+            if (ans.hasNaN()) {
+                std::cout << count << " nan\n";
+                return;
+            }
 
-            std::cout << "ans\n"  << ans.transpose() << std::endl;
+            // std::cout << "ans\n"  << ans.transpose() << std::endl;
 
             std::swap(c_b(exitVar), c_n(enteringVar));
             B.col(exitVar).swap(A_n.col(enteringVar));
@@ -321,17 +348,18 @@ void Simplex::Revised() {
 
         y = c_b.transpose()*B_inv; // 2.1
         yan = y.transpose()*A_n; // 2.2
-        std::cout << "yan\n" << yan.transpose() << std::endl;
+        // std::cout << "yan\n" << yan.transpose() << std::endl;
 
-        std::cout << "cb\n" << c_b.transpose() << std::endl;
-        std::cout << "cn\n" << c_n.transpose() << std::endl;
+        // std::cout << "cb\n" << c_b.transpose() << std::endl;
+        // std::cout << "cn\n" << c_n.transpose() << std::endl;
 
-        std::cout << "B\n" << B << std::endl;
-        std::cout << "A_n\n" << A_n << std::endl << std::endl;
+        // std::cout << "B\n" << B << std::endl;
+        // std::cout << "A_n\n" << A_n << std::endl << std::endl;
 
         direction = SelectEnteringVar(enteringVar, yan);
     }
 
-
+    std::cout << count << std::endl;
     std::cout << ans.transpose() << std::endl;
+    std::cout << instance.c.transpose() * ans << std::endl;
 }
