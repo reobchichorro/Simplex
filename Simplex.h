@@ -11,6 +11,7 @@
 // #include <fstream>
 // #include <math.h>
 // #include <filesystem>
+#include <umfpack.h>
  
 #include "mpsReader.h"
 #include "eigen/Eigen/src/Core/Matrix.h"
@@ -29,6 +30,7 @@ public:
     mpsReader instance;
  
     Simplex(mpsReader& instance);
+    ~Simplex();
 
     void Standard();
     void RevisedNaive(); // Deprecated
@@ -56,6 +58,8 @@ private:
     int maxRefact = 20;
     int E_k_size = 0;
     std::vector<std::pair<int, VectorXd> > E_k;
+    double *nll;
+    void *Symbolic, *Numeric;
     
     // MatrixXd G;
     // void CreateG();
@@ -63,5 +67,7 @@ private:
     void SetInitialSolution();
     bool CheckBounds(); // Returns true if firstPhase is necessary
     int SelectEnteringVar(int& enteringVar, VectorXd& yan);
+    void addEk(std::pair<int, VectorXd> E);
+    void refactor();
 };
 #endif

@@ -1,11 +1,36 @@
-#include <string>
-#include <vector>
-
 #include "Simplex.h"
-#include "mpsReader.h"
 
 Simplex::Simplex(mpsReader& instance) : instance(instance) {
     E_k = std::vector<std::pair<int, VectorXd> >(maxRefact);
+    // EE = std::vector<VectorXd>();
+    nll = (double *)NULL;
+
+    (void)umfpack_di_symbolic(x_b.size(), x_b.size(), B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), &Symbolic, nll, nll);
+    (void)umfpack_di_numeric(B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), Symbolic, &Numeric, nll, nll);
+}
+
+Simplex::~Simplex()
+{
+    umfpack_di_free_symbolic(&Symbolic);
+    umfpack_di_free_numeric(&Numeric);
+}
+
+void Simplex::addEk(std::pair<int, VectorXd> E) {
+    if (E_k_size >= maxRefact)
+        refactor();
+
+    E_k[E_k_size] = E;
+    E_k_size++;
+}
+
+void Simplex::refactor() {
+    E_k = std::vector<std::pair<int, VectorXd> >(maxRefact);
+
+    umfpack_di_free_symbolic(&Symbolic);
+    umfpack_di_free_numeric(&Numeric);
+
+    (void)umfpack_di_symbolic(x_b.size(), x_b.size(), B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), &Symbolic, nll, nll);
+    (void)umfpack_di_numeric(B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), Symbolic, &Numeric, nll, nll);
 }
 
 // void Simplex::CreateG() {
@@ -175,17 +200,22 @@ void Simplex::Revised() {
     int exitidx = -1;
     int count = 0;
     int direction = SelectEnteringVar(enteringVar, yan);
+    VectorXd dd;
     
     while (direction) {
         count++;
         // std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
         
         VectorXd d = B_inv*A_n(Eigen::all, enteringVar); // 2.3
+
+        
         // std::cout << "d\n" << d.transpose() << std::endl;
         
         entidx = x_n[enteringVar];
 
-        // E_k[E_k_size] = std::pair<int, VectorXd>(entidx, d); // TODO - cópia ou referência?
+        std::pair<int, VectorXd> E_ = {entidx, d};
+        addEk(E_);
+        std::cout << E_k_size << " E_k " << E_k[E_k_size-1].first << "\n" << E_k[E_k_size-1].second.transpose() << "\n";
 
         double tlb = direction * (lb(entidx) - ans(entidx));
         double tub = direction * (ub(entidx) - ans(entidx));
@@ -261,7 +291,7 @@ void Simplex::Revised() {
                     c_b(j) = instance.c(x_b[j]);
             }
         }
-        
+
         y = c_b.transpose()*B_inv; // 2.1
         yan = y.transpose()*A_n; // 2.2
         // std::cout << "yan\n" << yan.transpose() << std::endl;
