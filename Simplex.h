@@ -12,8 +12,10 @@
 // #include <math.h>
 // #include <filesystem>
 #include <umfpack.h>
- 
+
 #include "mpsReader.h"
+#include "eigen/Eigen/Dense"
+#include "eigen/Eigen/Sparse"
 #include "eigen/Eigen/src/Core/Matrix.h"
 
 using Eigen::MatrixXd;
@@ -32,18 +34,18 @@ public:
     Simplex(mpsReader& instance);
     ~Simplex();
 
-    void Standard();
-    void RevisedNaive(); // Deprecated
     void Revised();
 private:
     std::vector<int> x_b; // idx of basic variables
     std::vector<int> x_n; // idx of non-basic variables
 
-    VectorXd c_b; // objcoef of basic variables
-    VectorXd c_n; // objcoef of non-basic variables
+    // VectorXd c_b; // objcoef of basic variables
+    // VectorXd c_n; // objcoef of non-basic variables
+    VectorXd c_curr;
 
-    MatrixXd B; // constraint coefs of basic variables
-    MatrixXd A_n; // constraint coefs of non-basic variables
+    Eigen::SparseMatrix<double> A; // constraint coefs of variables
+    Eigen::SparseMatrix<double> B; // constraint coefs of basic variables
+    // Eigen::SparseMatrix<double> A_n; // constraint coefs of non-basic variables
 
     VectorXd lb; // lower bound of variables
     VectorXd ub; // upper bound of variables
@@ -52,8 +54,6 @@ private:
     VectorXd ans; // value of variables
 
     VectorXd b; // Deprecated
-
-    MatrixXd B_inv; // inverse of B
 
     int maxRefact = 20;
     int E_k_size = 0;
@@ -69,5 +69,7 @@ private:
     int SelectEnteringVar(int& enteringVar, VectorXd& yan);
     void addEk(std::pair<int, VectorXd> E);
     void refactor();
+    VectorXd BTRAN();
+    VectorXd FTRAN(int entIdx);
 };
 #endif
