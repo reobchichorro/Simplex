@@ -2,12 +2,8 @@
 
 Simplex::Simplex(mpsReader& instance) : instance(instance) {
     E_k = std::vector<std::pair<int, VectorXd> >(maxRefact);
-    // EE = std::vector<VectorXd>();
     nll = (double *)NULL;
     A = instance.A.sparseView();
-
-    (void)umfpack_di_symbolic(x_b.size(), x_b.size(), B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), &Symbolic, nll, nll);
-    (void)umfpack_di_numeric(B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), Symbolic, &Numeric, nll, nll);
 }
 
 Simplex::~Simplex()
@@ -26,6 +22,11 @@ void Simplex::addEk(std::pair<int, VectorXd> E) {
 
 void Simplex::refactor() {
     E_k = std::vector<std::pair<int, VectorXd> >(maxRefact);
+    E_k_size = 0;
+
+    for (long unsigned int i=0; i<x_b.size(); i++) {
+        B.col(i) = A.col(x_b[i]);
+    }
 
     umfpack_di_free_symbolic(&Symbolic);
     umfpack_di_free_numeric(&Numeric);
@@ -35,25 +36,35 @@ void Simplex::refactor() {
 }
 
 VectorXd Simplex::BTRAN() {
+    // std::cout << "c " << c_curr.transpose() << std::endl;
+    // std::cout << "xb: ";
+    // for (int i=0; i<x_b.size(); i++)
+    //     std::cout << x_b[i] << " ";
+    // std::cout << std::endl;
     VectorXd v = c_curr(x_b);
 
-    for (int i=E_k_size-1; i>=0; i--)
-        v(E_k[i].first) = v.dot(E_k[i].second) / E_k[i].second(E_k[i].first);
+    std::cout << "v " << v.transpose() << std::endl;
+    for (int i=E_k_size-1; i>=0; i--){ 
+        std::cout << "BTRAN Eki " << E_k[i].first << std::endl;
+        std::cout << E_k[i].second.transpose() << std::endl;
+        v(E_k[i].first) = (v(E_k[i].first) - v.dot(E_k[i].second)) / E_k[i].second(E_k[i].first);
+    }
 
+    std::cout << "v " << v.transpose() << std::endl;
     VectorXd y = VectorXd::Zero(x_b.size());
 
     (void)umfpack_di_solve(UMFPACK_At, B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), y.data(), v.data(), Numeric, nll, nll);
+    std::cout << "y " << v.transpose() << std::endl;
 
     return y;
 }
 
 VectorXd Simplex::FTRAN(int entIdx) {
-    VectorXd d;
-    // std::cout << entIdx << " entIdx - ABounds " << A.size() << std::endl;
-    VectorXd a = A.col(entIdx);
+    VectorXd d(x_b.size());
     
-    // std::cout << "umfpack" << std::endl;
-    (void)umfpack_di_solve(UMFPACK_At, B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), d.data(), instance.A.col(entIdx).data(), Numeric, nll, nll);    
+    // std::cout << entIdx << " entIdx - a " << instance.A.col(entIdx).transpose() << std::endl;
+
+    (void)umfpack_di_solve(UMFPACK_A, B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), d.data(), instance.A.col(entIdx).data(), Numeric, nll, nll);
     
     // std::cout << "Ek" << std::endl;
     for (int i=0; i<E_k_size; i++) {
@@ -62,12 +73,6 @@ VectorXd Simplex::FTRAN(int entIdx) {
         d -= p * E_k[i].second;
         
         d(E_k[i].first) = p;
-
-        // for (int j = 0; j < x_b.size(); j++)
-        // {
-        //     if (j != E_k[i].first)
-        //     v(j) -= p * E_k[i].second(j);
-        // }
     }
     // std::cout << "ddddd" << std::endl;
 
@@ -110,9 +115,9 @@ void Simplex::SetInitialSolution() {
         B.col(j) = A.col(x_b[j]);
         ans(x_b[j]) = (instance.A(j, Eigen::seqN(0, instance.n - instance.m)).dot(ans(Eigen::seqN(0, instance.n - instance.m))));
     }
-    // std::cout << ans.transpose() << std::endl;
 
-    // B_inv = B.inverse();
+    (void)umfpack_di_symbolic(x_b.size(), x_b.size(), B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), &Symbolic, nll, nll);
+    (void)umfpack_di_numeric(B.outerIndexPtr(), B.innerIndexPtr(), B.valuePtr(), Symbolic, &Numeric, nll, nll);
 }
 
 bool Simplex::CheckBounds() {
@@ -150,7 +155,8 @@ bool Simplex::CheckBounds() {
 int Simplex::SelectEnteringVar(int& enteringVar, VectorXd& yA) {
     enteringVar = -1;
     VectorXd objImpr = c_curr-yA;
-    for (int j=0; j<x_n.size(); j++) {
+    std::cout << c_curr.transpose() << "\n" << yA.transpose() << std::endl;
+    for (long unsigned int j=0; j<x_n.size(); j++) {
         if (objImpr(x_n[j]) > eps && ans(x_n[j]) < ub(x_n[j])) {
             enteringVar = j;
             return 1;
@@ -176,23 +182,22 @@ void Simplex::Revised() {
     int enteringVar = -1;
     int entidx = -1;
     int exitVar = -1;
-    int exitidx = -1;
+    // int exitidx = -1;
     int count = 0;
     int direction = SelectEnteringVar(enteringVar, yA);
     VectorXd dd;
     
-    while (direction) {
+    while (direction && count < 10) {
         count++;
         std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
         
         entidx = x_n[enteringVar];
-        std::cout << "FTRAN" << std::endl;
         VectorXd d = FTRAN(entidx); // 2.3
-        std::cout << "FTRANOUT" << std::endl;
         
         std::cout << "d\n" << d.transpose() << std::endl;
         
         std::pair<int, VectorXd> E_ = {enteringVar, d};
+        // std::cout << "Ek" << std::endl;
         addEk(E_);
         // std::cout << E_k_size << " E_k " << E_k[E_k_size-1].first << "\n" << E_k[E_k_size-1].second.transpose() << "\n";
 
@@ -243,7 +248,8 @@ void Simplex::Revised() {
             double t = tdub(lowestUBIdx);
             exitVar = lowestUBIdx;
             std::cout << "Exiting var: " << x_b[exitVar]+1 << std::endl;
-            exitidx = x_b[exitVar];
+            std::cout << "td: " << direction << " " << t << " " << d(exitVar) << std::endl;
+            // exitidx = x_b[exitVar];
             ans(entidx) += direction*t;
             ans(x_b) += -direction*t*d;
             if (ans.hasNaN()) {
@@ -274,6 +280,7 @@ void Simplex::Revised() {
         }
 
         y = BTRAN(); // 2.1
+        std::cout << y.transpose() << std::endl;
         yA = y.transpose()*A; // 2.2
         // std::cout << "yan\n" << yan.transpose() << std::endl;
 
