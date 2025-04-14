@@ -129,8 +129,10 @@ void Simplex::SetInitialSolution() {
 
 bool Simplex::CheckBounds() {
     bool firstPhase = false;
+    lb = instance.lb;
+    ub = instance.ub;
     for (int j=0; j<instance.m; j++) {
-        if (ans(x_b[j]) < lb(x_b[j])) {
+        if (ans(x_b[j]) < instance.lb(x_b[j])) {
             if (!firstPhase) {
                 for (int jj=0; jj<instance.n - instance.m; jj++)
                     c_curr(x_n[jj]) = 0.0;
@@ -140,8 +142,10 @@ bool Simplex::CheckBounds() {
                 // std::cout << j << " xj: " << x_b[j] << " " << ans(x_b[j]) << " " << lb(x_b[j]) << "\n";
             }
             c_curr(x_b[j]) = 1;
+            ub(x_b[j]) = lb(x_b[j]);
+            lb(x_b[j]) = -numeric_limits<double>::infinity();
         }
-        else if (ans(x_b[j]) > ub(x_b[j])) {
+        else if (ans(x_b[j]) > instance.ub(x_b[j])) {
             if (!firstPhase) {
                 for (int jj=0; jj<instance.n - instance.m; jj++)
                     c_curr(x_n[jj]) = 0.0;
@@ -150,6 +154,8 @@ bool Simplex::CheckBounds() {
                 firstPhase = true;
             }
             c_curr(x_b[j]) = -1;
+            lb(x_b[j]) = ub(x_b[j]);
+            ub(x_b[j]) = numeric_limits<double>::infinity();
         }
         else if(firstPhase)
             c_curr(x_b[j]) = 0.0;
@@ -162,14 +168,22 @@ bool Simplex::CheckBounds() {
 int Simplex::SelectEnteringVar(int& enteringVar, VectorXd& yA) {
     enteringVar = -1;
     VectorXd objImpr = c_curr-yA;
+
+    // int tprint = 14;
+    // std::cout << "entering14 " << x_n[tprint] << ", " << c_curr(x_n[tprint]) << ", " << yA(x_n[tprint]) << ", " << lb(x_n[tprint]) << ", " <<  ans(x_n[tprint]) << ", " << ub(x_n[tprint]) << "\n";
+
     // std::cout << c_curr.transpose() << "\n" << yA.transpose() << std::endl;
     for (long unsigned int j=0; j<x_n.size(); j++) {
+        // if (j==tprint)
+            // std::cout << "objImpr14 " << objImpr(x_n[tprint]) << ", " << ans(x_n[tprint]) << ", " << ub(x_n[tprint]) << "\n";
         if (objImpr(x_n[j]) > eps && ans(x_n[j]) < ub(x_n[j])) {
             enteringVar = j;
+            // std::cout << "enteringidx " << j << "\n";
             return 1;
         }
-        else if (objImpr(x_n[j]) < eps && ans(x_n[j]) > lb(x_n[j])) {
+        else if (objImpr(x_n[j]) < -eps && ans(x_n[j]) > lb(x_n[j])) {
             enteringVar = j;
+            // std::cout << "enteringidx " << j << "\n";
             return -1;
         }
     }
@@ -179,7 +193,15 @@ int Simplex::SelectEnteringVar(int& enteringVar, VectorXd& yA) {
 void Simplex::Revised() {
     SetInitialSolution(); // 2.0
     bool firstPhase = CheckBounds();
-    std::cout << "phase "  << firstPhase << std::endl;
+    // std::cout << "phase "  << firstPhase << std::endl;
+    // int pcount =0, qcount=0;
+    // for (int i=0; i<c_curr.size(); i++) {
+    //     if (abs(c_curr[i]-1) <= eps)
+    //         pcount++;
+    //     if (abs(c_curr[i]+1) <= eps)
+    //         qcount++;
+    // }
+    // std::cout << pcount << " PQ " << qcount << "\n";
     // std::cout << "ans\n"  << ans.transpose() << std::endl;
 
     VectorXd y = BTRAN(); // 2.1
@@ -195,9 +217,10 @@ void Simplex::Revised() {
     int direction = SelectEnteringVar(enteringVar, yA);
     VectorXd dd;
     
-    while (direction && count < 1e100) {
+    while (direction && count < 1e300) {
         count++;
-        // std::cout << "Entering var: " << x_n[enteringVar]+1 << std::endl;
+        if (!firstPhase)
+            std::cout << "Entering var: " << x_n[enteringVar]+1 << " direction " << direction << std::endl;
         
         entidx = x_n[enteringVar];
         VectorXd d = FTRAN(entidx); // 2.3
@@ -224,13 +247,16 @@ void Simplex::Revised() {
                 std::swap(tdlb(j), tdub(j));
 
         for (int j=0; j<tdub.size(); j++)
-            if (isnan(tdub(j)) || d(j) == 0.0)
+            if (isnan(tdub(j)) || abs(d(j)) <= eps)
                 tdub(j) = numeric_limits<double>::infinity();
         
         // std::cout << "t\n" << tlb << " " << tub << "\n" << tdlb.transpose() << "\n" << tdub.transpose() << std::endl;
         
         int lowestUBIdx = std::distance(tdub.begin(), std::min_element(tdub.begin(), tdub.end()));
         
+        // int tprint = 19;
+        // std::cout << "step19 " << tdub(tprint) << " " << lb(x_b[tprint]) << ", " <<  ans(x_b[tprint]) << ", " << ub(x_b[tprint]) << ", " << d(tprint) << "\n";
+
         // std::cout << lowestUBIdx << " lubidx\n";
         // std::cout << tdub.hasNaN() << " tlb tub " << tub << " " << lowestUBIdx << " " << tdub(lowestUBIdx) << "\n";
         // std::cout << ans(x_b[1]) << " " << ub(x_b[1]) << " " << d(1) << " " << direction << "\n";
@@ -275,6 +301,7 @@ void Simplex::Revised() {
         }
         
         // std::cout << "\nNext iteration\n";
+        std::cout << "cost: " << instance.c.transpose() * ans << std::endl;
 
         if (firstPhase) {
             firstPhase = CheckBounds();
@@ -287,7 +314,18 @@ void Simplex::Revised() {
                 // for (int j=0; j<instance.m; j++)
                 //     c_b(j) = instance.c(x_b[j]);
                 c_curr = instance.c;
+                refactor();
             }
+            // else {
+            //     pcount =0, qcount=0;
+            //     for (int i=0; i<c_curr.size(); i++) {
+            //         if (abs(c_curr[i]-1) <= eps)
+            //             pcount++;
+            //         if (abs(c_curr[i]+1) <= eps)
+            //             qcount++;
+            //     }
+            //     std::cout << pcount << " PQ " << qcount << "\n";
+            // }
         }
 
         y = BTRAN(); // 2.1
