@@ -28,6 +28,8 @@ int main(int argc, char **argv) {
         std::cout << mps.n_cols << std::endl;
         std::cout << mps.m << std::endl;
         std::cout << mps.n << std::endl;
+
+        mps.c = -mps.c;
     
         // std::cout << "A" << std::endl;
         // std::cout << mps.A << std::endl;

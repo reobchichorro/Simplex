@@ -219,8 +219,8 @@ void Simplex::Revised() {
     
     while (direction && count < 1e300) {
         count++;
-        if (!firstPhase)
-            std::cout << "Entering var: " << x_n[enteringVar]+1 << " direction " << direction << std::endl;
+        // if (!firstPhase)
+        //     std::cout << "Entering var: " << x_n[enteringVar]+1 << " direction " << direction << std::endl;
         
         entidx = x_n[enteringVar];
         VectorXd d = FTRAN(entidx); // 2.3
@@ -301,7 +301,7 @@ void Simplex::Revised() {
         }
         
         // std::cout << "\nNext iteration\n";
-        std::cout << "cost: " << instance.c.transpose() * ans << std::endl;
+        std::cout << "cost: " << instance.c.transpose() * ans << " 1a fase? " << firstPhase << std::endl;
 
         if (firstPhase) {
             firstPhase = CheckBounds();
