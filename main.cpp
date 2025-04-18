@@ -67,5 +67,5 @@ int main(int argc, char **argv) {
     std::cout << "\nSimplex\n";
     Simplex solver(mps);
     solver.Revised();
-    // std::cout << "teste" << std::endl;
+    solver.DualInstance();
 }

@@ -30,11 +30,13 @@ typedef std::string str;
 class Simplex {
 public:
     mpsReader instance;
+    mpsReader dual_instance;
  
     Simplex(mpsReader& instance);
     ~Simplex();
 
     void Revised();
+    void DualInstance();
 private:
     std::vector<int> x_b; // idx of basic variables
     std::vector<int> x_n; // idx of non-basic variables
