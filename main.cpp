@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 
-#include "Utils.cpp"
 #include "mpsReader.h"
+#include "Utils.h"
 #include "Simplex.h"
 
 typedef std::string str;
@@ -31,16 +31,16 @@ int main(int argc, char **argv) {
 
         mps.c = -mps.c;
     
-        // std::cout << "A" << std::endl;
-        // std::cout << mps.A << std::endl;
-        // std::cout << "b" << std::endl;
-        // std::cout << mps.b << std::endl;
-        // std::cout << "lb" << std::endl;
-        // std::cout << mps.lb.transpose() << std::endl;
-        // std::cout << "ub" << std::endl;
-        // std::cout << mps.ub.transpose() << std::endl;
-        // std::cout << "c" << std::endl;
-        // std::cout << mps.c.transpose() << std::endl;
+        std::cout << "A" << std::endl;
+        std::cout << mps.A << std::endl;
+        std::cout << "b" << std::endl;
+        std::cout << mps.b << std::endl;
+        std::cout << "lb" << std::endl;
+        std::cout << mps.lb.transpose() << std::endl;
+        std::cout << "ub" << std::endl;
+        std::cout << mps.ub.transpose() << std::endl;
+        std::cout << "c" << std::endl;
+        std::cout << mps.c.transpose() << std::endl;
 
         // for (std::vector<int>::size_type i=0; i < mps.restricoes.size(); i++)
         //     std::cout << mps.restricoes[i] << " ";
@@ -67,5 +67,9 @@ int main(int argc, char **argv) {
     std::cout << "\nSimplex\n";
     Simplex solver(mps);
     solver.Revised();
-    solver.DualInstance();
+
+    mpsReader dual;
+    createDualInstance(mps, dual);
+    Simplex dual_solver(dual);
+    dual_solver.Revised();
 }
