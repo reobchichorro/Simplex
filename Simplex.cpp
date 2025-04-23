@@ -292,12 +292,12 @@ void Simplex::Revised() {
         }
         
         // std::cout << "\nNext iteration\n";
-        std::cout << "Cost: " << instance.c.transpose() * ans << " Phase: " << firstPhase << std::endl;
+        std::cerr << "Cost: " << instance.c.transpose() * ans << " Phase: " << firstPhase << std::endl;
 
         if (firstPhase) {
             firstPhase = CheckBounds();
             if (!firstPhase) {
-                std::cout << "Second phase\n";
+                std::cerr << "Second phase\n";
                 // Non-basic variables
                 // for (int j=0; j<instance.n - instance.m; j++)
                 //     c_n(j) = instance.c(x_n[j]);
@@ -334,6 +334,61 @@ void Simplex::Revised() {
 
     std::cout << (firstPhase ? "Infeasible!\n" : "Optimal found.\n");
     std::cout << "Total iterations: " << count << std::endl;
-    std::cout << ans.transpose() << std::endl;
-    std::cout << instance.c.transpose() * ans << std::endl;
+    std::cout << "Solution cost: " << instance.c.transpose() * ans << std::endl;
+    if (instance.m < 100) {
+        std::cout << "Var values:\n" << ans.transpose() << std::endl;
+        std::cout << "Dual:\n" << y.transpose() << std::endl;
+    }
+}
+
+void Simplex::RHSSensAnal() {
+    // std::cout << B << std::endl;
+    // for (int i=0; i<E_k_size; i++) {
+    //     std::cout << E_k[i].first << ": " << E_k[i].second.transpose() << "\n";
+    // }
+    refactor();
+    MatrixXd B2 = B;
+    // std::cout << "B2\n" << B2 << std::endl;
+    // std::cout << "B2 inverse\n" << B2.inverse() << std::endl;
+    // std::cout << "\n";
+    MatrixXd B2Inv = B2.inverse();
+    VectorXd lbVars = lb(x_b) - ans(x_b);
+    VectorXd ubVars = ub(x_b) - ans(x_b);
+
+    // for (size_t i=0; i<x_b.size(); i++) {
+    //     std::cout << x_b[i] << ", ";
+    // }
+    // std::cout << "\n";
+    // std::cout << lbVars << std::endl;
+    // std::cout << ubVars << std::endl;
+
+    // For constraint, do sensibility analysis
+    VectorXd lbChange = VectorXd::Zero(instance.m);
+    VectorXd ubChange = VectorXd::Zero(instance.m);
+    for (int i=0; i<instance.m; i++) {
+        lbChange(i) = -numeric_limits<double>::infinity();
+        ubChange(i) = numeric_limits<double>::infinity();
+        VectorXd col = B2Inv.col(i);
+        
+        for (int ii=0; ii<col.size(); ii++) {
+            if (abs(col(ii)) < eps)
+                continue;
+            double lb = lbVars(ii) / col(ii);
+            double ub = ubVars(ii) / col(ii);
+            if (col(ii) < 0)
+                std::swap(lb, ub);
+            if (lb > lbChange(i))
+                lbChange(i) = lb;
+            if (ub < ubChange(i))
+                ubChange(i) = ub;
+        }
+    }
+    if (instance.m < 100) {
+        std::cout << "LB of constraint variation:\n";
+        std::cout << lbChange.transpose() << std::endl;
+        std::cout << "UB of constraint variation:\n";
+        std::cout << ubChange.transpose() << std::endl;
+    }
+
+
 }

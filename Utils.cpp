@@ -54,7 +54,7 @@ void createDualInstance(const mpsReader& instance, mpsReader& dual_instance) {
     
     for (size_t i=0; i<BoundVars.size(); i++) {
         int mi = instance.m+i;
-        std::cout << i << ": " << BoundVars[i].first << " " << BoundVars[i].second << std::endl;
+        // std::cout << i << ": " << BoundVars[i].first << " " << BoundVars[i].second << std::endl;
         dual_instance.A(BoundVars[i].first, mi) = 1;
         dual_instance.c(mi) = BoundVars[i].second ? instance.ub(BoundVars[i].first) : instance.lb(BoundVars[i].first);
         dual_instance.lb(mi) = BoundVars[i].second ? 0 : -numeric_limits<double>::infinity();
@@ -70,14 +70,17 @@ void createDualInstance(const mpsReader& instance, mpsReader& dual_instance) {
     dual_instance.m = dual_instance.A.rows();
     dual_instance.n = dual_instance.A.cols();
 
-    std::cout << "A" << std::endl;
-    std::cout << dual_instance.A << std::endl;
-    std::cout << "b" << std::endl;
-    std::cout << dual_instance.b << std::endl;
-    std::cout << "lb" << std::endl;
-    std::cout << dual_instance.lb.transpose() << std::endl;
-    std::cout << "ub" << std::endl;
-    std::cout << dual_instance.ub.transpose() << std::endl;
-    std::cout << "c" << std::endl;
-    std::cout << dual_instance.c.transpose() << std::endl;
+
+    if (instance.m < 100) {
+        std::cout << "A" << std::endl;
+        std::cout << dual_instance.A << std::endl;
+        std::cout << "b" << std::endl;
+        std::cout << dual_instance.b << std::endl;
+        std::cout << "lb" << std::endl;
+        std::cout << dual_instance.lb.transpose() << std::endl;
+        std::cout << "ub" << std::endl;
+        std::cout << dual_instance.ub.transpose() << std::endl;
+        std::cout << "c" << std::endl;
+        std::cout << dual_instance.c.transpose() << std::endl;
+    }
 }

@@ -36,6 +36,7 @@ public:
     ~Simplex();
 
     void Revised();
+    void RHSSensAnal();
 private:
     std::vector<int> x_b; // idx of basic variables
     std::vector<int> x_n; // idx of non-basic variables

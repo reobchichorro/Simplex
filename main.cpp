@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
         mps.read(filename, pp);
 
         std::cout << mps.Name << std::endl;
+        std::cerr << mps.Name << std::endl;
         std::cout << mps.n_rows << std::endl;
         std::cout << mps.n_rows_eq << std::endl;
         std::cout << mps.n_rows_inq << std::endl;
@@ -31,16 +32,16 @@ int main(int argc, char **argv) {
 
         mps.c = -mps.c;
     
-        std::cout << "A" << std::endl;
-        std::cout << mps.A << std::endl;
-        std::cout << "b" << std::endl;
-        std::cout << mps.b << std::endl;
-        std::cout << "lb" << std::endl;
-        std::cout << mps.lb.transpose() << std::endl;
-        std::cout << "ub" << std::endl;
-        std::cout << mps.ub.transpose() << std::endl;
-        std::cout << "c" << std::endl;
-        std::cout << mps.c.transpose() << std::endl;
+        // std::cout << "A" << std::endl;
+        // std::cout << mps.A << std::endl;
+        // std::cout << "b" << std::endl;
+        // std::cout << mps.b << std::endl;
+        // std::cout << "lb" << std::endl;
+        // std::cout << mps.lb.transpose() << std::endl;
+        // std::cout << "ub" << std::endl;
+        // std::cout << mps.ub.transpose() << std::endl;
+        // std::cout << "c" << std::endl;
+        // std::cout << mps.c.transpose() << std::endl;
 
         // for (std::vector<int>::size_type i=0; i < mps.restricoes.size(); i++)
         //     std::cout << mps.restricoes[i] << " ";
@@ -65,11 +66,16 @@ int main(int argc, char **argv) {
     }
     
     std::cout << "\nSimplex\n";
+    std::cerr << "Simplex\n";
     Simplex solver(mps);
     solver.Revised();
+    solver.RHSSensAnal();
 
+    std::cout << "\nDual\n";
+    // std::cerr << "Dual\n";
     mpsReader dual;
     createDualInstance(mps, dual);
-    Simplex dual_solver(dual);
-    dual_solver.Revised();
+    // Simplex dual_solver(dual);
+    // dual_solver.Revised();
+    // std::cerr << "\n";
 }
