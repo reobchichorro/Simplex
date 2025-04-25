@@ -329,6 +329,11 @@ void Simplex::Revised() {
         // std::cout << "B\n" << B << std::endl;
         // std::cout << "A_n\n" << A_n << std::endl << std::endl;
 
+        if (instance.m < 100) {
+            std::cerr << "Var values:\n" << ans.transpose() << std::endl;
+            std::cerr << "Dual:\n" << y.transpose() << std::endl;
+        }
+
         direction = SelectEnteringVar(enteringVar, yA);
     }
 
